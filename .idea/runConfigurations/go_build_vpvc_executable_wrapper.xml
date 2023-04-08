@@ -1,0 +1,14 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="go build vpvc-executable-wrapper" type="GoApplicationRunConfiguration" factoryName="Go Application" nameIsGenerated="true">
+    <module name="vpvc-executable-wrapper" />
+    <working_directory value="$PROJECT_DIR$" />
+    <go_parameters value="-ldflags -H=windowsgui" />
+    <kind value="PACKAGE" />
+    <package value="vpvc-executable-wrapper" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$" />
+    <output_directory value="$PROJECT_DIR$/build-output" />
+    <option name="run" value="false" />
+    <method v="2" />
+  </configuration>
+</component>
