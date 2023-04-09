@@ -48,6 +48,8 @@ func main() {
 	userHomeDirectoryPath, userHomeDirectoryExtractionError := os.UserHomeDir()
 
 	if userHomeDirectoryExtractionError != nil {
+		w32.DestroyWindow(invisibleWrapperWindowHandle)
+
 		fmt.Println(userHomeDirectoryExtractionError)
 		return
 	}
@@ -58,6 +60,29 @@ func main() {
 	// firewall prompt every time
 	wrapperTempFilesDirectoryPath := path.Join(userHomeDirectoryPath, ".vpvc")
 
+	appExtractionDirectoryPath := path.Join(wrapperTempFilesDirectoryPath, "app-extracted")
+
+	// Make sure the app is not running already by checking if the
+	// extracted app directory exists and deleting the main
+	// executable fails (because it's open)
+	appExtractionDirectoryContentsBeforeExtraction, appExtractionDirectoryContentListingBeforeExtractionError := os.ReadDir(appExtractionDirectoryPath)
+	if appExtractionDirectoryContentListingBeforeExtractionError == nil {
+		appExtractionDirectoryContentsFirstEntryBeforeExtraction := appExtractionDirectoryContentsBeforeExtraction[0]
+
+		if appExtractionDirectoryContentsFirstEntryBeforeExtraction.IsDir() {
+			appExecutablePath := path.Join(appExtractionDirectoryPath, appExtractionDirectoryContentsFirstEntryBeforeExtraction.Name(), "VPVC.exe")
+
+			appExecutableDeletionError := os.Remove(appExecutablePath)
+
+			if appExecutableDeletionError != nil {
+				w32.DestroyWindow(invisibleWrapperWindowHandle)
+
+				fmt.Println(appExecutableDeletionError)
+				return
+			}
+		}
+	}
+
 	_ = os.RemoveAll(wrapperTempFilesDirectoryPath)
 	_ = os.Mkdir(wrapperTempFilesDirectoryPath, os.ModePerm)
 
@@ -67,29 +92,33 @@ func main() {
 	zipArchiveTempFile, zipArchiveTempFileCreationError := os.Create(zipArchiveTempFilePath)
 
 	if inputArchiveOpeningError != nil || zipArchiveTempFileCreationError != nil {
-		inputArchiveFile.Close()
+		_ = inputArchiveFile.Close()
+		w32.DestroyWindow(invisibleWrapperWindowHandle)
+
 		fmt.Println(inputArchiveOpeningError)
 		return
 	}
 
 	decodingError := DecodeS2Stream(inputArchiveFile, zipArchiveTempFile)
 
-	inputArchiveFile.Close()
+	_ = inputArchiveFile.Close()
 
-	zipArchiveTempFile.Close()
+	_ = zipArchiveTempFile.Close()
 
 	if decodingError != nil {
+		w32.DestroyWindow(invisibleWrapperWindowHandle)
+
 		fmt.Println(decodingError)
 		return
 	}
-
-	appExtractionDirectoryPath := path.Join(wrapperTempFilesDirectoryPath, "app-extracted")
 
 	appExtractionDirectoryCreationError := os.Mkdir(
 		appExtractionDirectoryPath,
 		os.ModePerm)
 
 	if appExtractionDirectoryCreationError != nil {
+		w32.DestroyWindow(invisibleWrapperWindowHandle)
+
 		fmt.Println(appExtractionDirectoryCreationError)
 		return
 	}
@@ -98,6 +127,8 @@ func main() {
 
 	_, extractionError := uz.Extract(zipArchiveTempFile.Name(), appExtractionDirectoryPath)
 	if extractionError != nil {
+		w32.DestroyWindow(invisibleWrapperWindowHandle)
+
 		fmt.Println(extractionError)
 		return
 	}
@@ -108,6 +139,7 @@ func main() {
 
 	if appExtractionDirectoryContentListingError != nil {
 		_ = os.RemoveAll(wrapperTempFilesDirectoryPath)
+		w32.DestroyWindow(invisibleWrapperWindowHandle)
 
 		fmt.Println(appExtractionDirectoryContentListingError)
 		return
@@ -117,6 +149,7 @@ func main() {
 
 	if !appExtractionDirectoryContentsFirstEntry.IsDir() {
 		_ = os.RemoveAll(wrapperTempFilesDirectoryPath)
+		w32.DestroyWindow(invisibleWrapperWindowHandle)
 		return
 	}
 
@@ -139,6 +172,7 @@ func main() {
 
 	if appStartingError != nil {
 		_ = os.RemoveAll(wrapperTempFilesDirectoryPath)
+		w32.DestroyWindow(invisibleWrapperWindowHandle)
 
 		fmt.Println(appStartingError)
 		return
@@ -153,6 +187,7 @@ func main() {
 
 		if appWaitingError != nil {
 			_ = os.RemoveAll(wrapperTempFilesDirectoryPath)
+			w32.DestroyWindow(invisibleWrapperWindowHandle)
 
 			fmt.Println(appWaitingError)
 			return
